@@ -1,4 +1,6 @@
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import sqlite3
 import requests
 from dotenv import load_dotenv
@@ -13,6 +15,23 @@ GUILD_ID = os.getenv("GUILD_ID")
 RANK_ROLE_MAPPING = {
     1: "1529594788817535068",
 }
+
+# --- MINI WEB SERVER AGAR RENDER TIDAK TIMEOUT ---
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is alive and running!")
+
+def run_server():
+    # Render otomatis memberikan port melalui environment variable 'PORT'
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    server.serve_forever()
+
+# Jalankan web server di background thread secara otomatis saat bot dinyalakan
+threading.Thread(target=run_server, daemon=True).start()
+# -----------------------------------------------
 
 intents = discord.Intents.default()
 intents.members = True
@@ -34,9 +53,6 @@ def get_member_id_by_username(discord_username, guild):
             str(member).lower() == clean_input):
             return member.id
     return None
-
-# Opsional: Bisa ditambahkan fungsi untuk mengecek database bersama atau Webhook listener jika ingin role otomatis aktif kembali dari server terpisah.
-print("Bot Discord Worker siap dijalankan.")
 
 if __name__ == "__main__":
     if DISCORD_BOT_TOKEN:
