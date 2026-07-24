@@ -23,6 +23,11 @@ class SimpleHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Bot is alive and running!")
 
+    def do_HEAD(self):
+        # Menangani method HEAD dari UptimeRobot agar tidak error
+        self.send_response(200)
+        self.end_headers()
+
 def run_server():
     # Render otomatis memberikan port melalui environment variable 'PORT'
     port = int(os.environ.get("PORT", 10000))
