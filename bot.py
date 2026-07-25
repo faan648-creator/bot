@@ -4,14 +4,16 @@ from dotenv import load_dotenv
 import discord
 from discord import app_commands
 from discord.ext import commands
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 load_dotenv()
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 GUILD_ID = os.getenv("GUILD_ID")
 
-# URL API Website Flask kamu di PythonAnywhere (Ganti "usernamekamu" dengan username aslimu)
-FLASK_API_URL = "https://akihito.pythonanywhere.com/api/add-ticket"
+# URL API Website Flask kamu di PythonAnywhere
+FLASK_API_URL = "https://akihito.pythonanywhere.com/api/add-ticket" 
 
 # Token rahasia yang otomatis dibaca dari Environment Variables Render
 BOT_SECRET_TOKEN = os.getenv("BOT_SECRET_TOKEN")
@@ -79,8 +81,30 @@ async def giveticket(interaction: discord.Interaction, user: discord.User):
     except Exception as e:
         await interaction.response.send_message(f"❌ Terjadi error: {e}", ephemeral=True)
 
+# --- WEB SERVER SEDERHANA UNTUK RENDER & UPTIMEROBOT ---
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Bot is active and running!")
+    
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    server.serve_forever()
+
 if __name__ == "__main__":
     if DISCORD_BOT_TOKEN:
+        # Menjalankan web server mini di background agar Render mendeteksi port terbuka & UptimeRobot bisa melakukan ping
+        server_thread = threading.Thread(target=run_web_server, daemon=True)
+        server_thread.start()
+        print("Web server pendukung UptimeRobot berhasil dijalankan!")
+
         bot.run(DISCORD_BOT_TOKEN)
     else:
         print("Error: DISCORD_BOT_TOKEN tidak ditemukan di Environment Variables!")
