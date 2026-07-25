@@ -53,6 +53,7 @@ def get_member_id_by_username(discord_username, guild):
     return None
 
 # --- SLASH COMMAND: /giveticket ---
+# --- SLASH COMMAND: /giveticket ---
 @bot.tree.command(name="giveticket", description="Berikan 1 tiket gacha ke user secara otomatis ke website")
 @app_commands.describe(user="Pilih user Discord yang ingin diberi tiket")
 async def giveticket(interaction: discord.Interaction, user: discord.User):
@@ -71,10 +72,27 @@ async def giveticket(interaction: discord.Interaction, user: discord.User):
         res_data = response.json()
         
         if response.status_code == 200 and res_data.get("success"):
-            await interaction.response.send_message(f"✅ Berhasil! {res_data.get('message')} (Target: {user.mention})")
+            # Membuat Embed yang lebih profesional dan menarik
+            embed = discord.Embed(
+                title="🎟️ Berhasil Memberikan Tiket Gacha!",
+                description=f"Tiket berhasil dikirimkan ke sistem website untuk member terkait.",
+                color=0x2ecc71 # Warna Hijau Profesional
+            )
+            embed.add_field(name="Target Member", value=user.mention, inline=True)
+            embed.add_field(name="Jumlah", value="`1 Tiket (Aktif 24 Jam)`", inline=True)
+            embed.set_footer(text="Sistem Gacha Galatama • Otomatis Terhubung ke Web")
+            
+            await interaction.response.send_message(embed=embed)
         else:
             error_msg = res_data.get('error', 'Terjadi kesalahan tidak dikenal.')
-            await interaction.response.send_message(f"❌ Gagal memberikan tiket: {error_msg}", ephemeral=True)
+            
+            # Embed khusus untuk pesan error agar tetap rapi
+            embed_err = discord.Embed(
+                title="❌ Gagal Memberikan Tiket",
+                description=error_msg,
+                color=0xe74c3c # Warna Merah
+            )
+            await interaction.response.send_message(embed=embed_err, ephemeral=True)
             
     except requests.exceptions.ConnectionError:
         await interaction.response.send_message("❌ Gagal terhubung ke server website Flask. Periksa koneksi PythonAnywhere!", ephemeral=True)
